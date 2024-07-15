@@ -15,7 +15,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://fighterbay.com/images/fig1.png">
 <meta property="article:published_time" content="2024-07-15T04:56:15.032Z">
-<meta property="article:modified_time" content="2024-07-15T08:47:38.969Z">
+<meta property="article:modified_time" content="2024-07-15T08:51:27.288Z">
 <meta property="article:author" content="FighterBay">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://fighterbay.com/images/fig1.png">
@@ -211,8 +211,7 @@
 <p>Our function <code>hk_CreateIpForwardEntry</code> will have a simple mechanism, we will monitor for calls containing specific <code>dwForwardDest</code> and <code>dwForwardMask</code>, which are <code>Network Destination</code> and <code>Netmask</code> respectively(see route table above) and if the request to create a route entry contains those we will simply return <code>NO_ERROR</code> and the VPN service will think that the route is added to the table.</p>
 <p>We know that our VPN will try to create an entry with <code>dwForwardDest</code> set to <code>192.168.2.0</code> and <code>dwForwardMask</code> set to <code>255.255.255.0</code>. We need to convert them to DWORDs with little-endian ordering;<br><code>192.168.2.0</code> -&gt; <code>174272</code><br><code>255.255.255.0</code> -&gt; <code>16777215</code></p>
 <p>We will use <code>OutputDebugString</code> to output logs from our <code>hk_CreateIpForwardEntry</code> and use <code>DbgView</code> to view them.</p>
-<p>After changing some memory bytes of the running VPN Service (heh), we see the output from our own bytes:</p>
-<p>But the entry is already present in the route table so the VPN service won’t try to create it again, so let’s delete it to trigger the process :D</p>
+<p>After changing some memory bytes of the running VPN Service (heh), we see the output from our own bytes:<br><code>Hooked CreateIpForwardEntry @FUNC_ADDRESS</code><br>But the entry is already present in the route table so the VPN service won’t try to create it again, so let’s delete it to trigger the process :D</p>
 <p><img src="/images/fig1.png"></p>
 <p>And, now we got a reliable way to access devices on our LAN :D.<br>Source code is not going to be provided for obvious reasons.</p>
 
