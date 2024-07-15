@@ -6,16 +6,16 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-    <meta name="description" content="Fixing corporate VPN, one route at a timeOne of the lesser known perks of working in a corporate environment albeit remotely is that you can’t connect to devices on LAN. This educational post shows ho">
+    <meta name="description" content="Fixing corporate VPN, one route at a timeOne of the lesser known perks of working in a corporate environment albeit remotely is that you can’t connect to devices on LAN(at-least for me). This educatio">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Lesser known perks of a corporate job">
 <meta property="og:url" content="http://fighterbay.com/2024/07/15/perks-corporate-job/index.html">
 <meta property="og:site_name" content="FighterBay">
-<meta property="og:description" content="Fixing corporate VPN, one route at a timeOne of the lesser known perks of working in a corporate environment albeit remotely is that you can’t connect to devices on LAN. This educational post shows ho">
+<meta property="og:description" content="Fixing corporate VPN, one route at a timeOne of the lesser known perks of working in a corporate environment albeit remotely is that you can’t connect to devices on LAN(at-least for me). This educatio">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://fighterbay.com/images/fig1.png">
 <meta property="article:published_time" content="2024-07-15T04:56:15.032Z">
-<meta property="article:modified_time" content="2024-07-15T08:16:07.315Z">
+<meta property="article:modified_time" content="2024-07-15T08:47:38.969Z">
 <meta property="article:author" content="FighterBay">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://fighterbay.com/images/fig1.png">
@@ -162,7 +162,7 @@
   
 
   <div class="content e-content" itemprop="articleBody">
-    <h2 id="Fixing-corporate-VPN-one-route-at-a-time"><a href="#Fixing-corporate-VPN-one-route-at-a-time" class="headerlink" title="Fixing corporate VPN, one route at a time"></a>Fixing corporate VPN, one route at a time</h2><p>One of the lesser known perks of working in a corporate environment albeit remotely is that you can’t connect to devices on LAN. This educational post shows how to circumvent that restriction for educational purposes.</p>
+    <h2 id="Fixing-corporate-VPN-one-route-at-a-time"><a href="#Fixing-corporate-VPN-one-route-at-a-time" class="headerlink" title="Fixing corporate VPN, one route at a time"></a>Fixing corporate VPN, one route at a time</h2><p>One of the lesser known perks of working in a corporate environment albeit remotely is that you can’t connect to devices on LAN(at-least for me). This educational post shows how to circumvent that restriction for educational purposes.</p>
 <p>One of the first things to notice is that whenever I ping any of my devices on LAN, I don’t get any response and this is only when the VPN is on.</p>
 <p>Hmm, so the basic hunch is that when the VPN turns on, it creates an entry in the route table that superseeds the existing one taking in all the traffic to the VPNs interface.</p>
 <p>Let’s take a look at our route table, shall we?</p>
@@ -206,12 +206,12 @@
     B -.-> C[FncC]
     C -.-> A</pre>
 
-<p>The dashed line shows that FncB won’t be executed rather the control will be pased on to FncC and FncC can decide what to do. That’s how most AVs work these days to detect malicious things during runtime.</p>
+<p>The dashed line shows that FncB won’t be executed rather the control will be passed on to FncC and FncC can decide what to do. That’s how most AVs work these days to detect malicious things during runtime.</p>
 <p>Now that we know what we can do with user-mode hooking.<br>Let’s write a hook for it, our function should have the same parameters and it’s types. Let’s name our function as <code>hk_CreateIpForwardEntry</code>.</p>
 <p>Our function <code>hk_CreateIpForwardEntry</code> will have a simple mechanism, we will monitor for calls containing specific <code>dwForwardDest</code> and <code>dwForwardMask</code>, which are <code>Network Destination</code> and <code>Netmask</code> respectively(see route table above) and if the request to create a route entry contains those we will simply return <code>NO_ERROR</code> and the VPN service will think that the route is added to the table.</p>
 <p>We know that our VPN will try to create an entry with <code>dwForwardDest</code> set to <code>192.168.2.0</code> and <code>dwForwardMask</code> set to <code>255.255.255.0</code>. We need to convert them to DWORDs with little-endian ordering;<br><code>192.168.2.0</code> -&gt; <code>174272</code><br><code>255.255.255.0</code> -&gt; <code>16777215</code></p>
 <p>We will use <code>OutputDebugString</code> to output logs from our <code>hk_CreateIpForwardEntry</code> and use <code>DbgView</code> to view them.</p>
-<p>After changing some memory bytes of the running VPN Service, we see the output from our own bytes:</p>
+<p>After changing some memory bytes of the running VPN Service (heh), we see the output from our own bytes:</p>
 <p>But the entry is already present in the route table so the VPN service won’t try to create it again, so let’s delete it to trigger the process :D</p>
 <p><img src="/images/fig1.png"></p>
 <p>And, now we got a reliable way to access devices on our LAN :D.<br>Source code is not going to be provided for obvious reasons.</p>
