@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tenacity - Copy</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding-top: 60px;
+    background-color: #f9f9f9;
+    height: 100vh;
+    margin: 0;
+    user-select: none;
+  }
+  h1 { margin-bottom: 10px; }
+  input {
+    font-size: 16px;
+    padding: 5px;
+    width: 60px;
+    text-align: center;
+  }
+  #score, #timer {
+    font-size: 20px;
+    margin: 10px 0;
+  }
+  #warning {
+    font-size: 22px;
+    font-weight: bold;
+    color: #d9534f;
+    margin: 10px 0;
+    height: 30px;
+    transition: opacity 0.3s;
+  }
+  #history {
+    margin-top: 30px;
+    text-align: left;
+    max-width: 450px;
+    margin-left: auto;
+    margin-right: auto;
+    background: #fff;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  .success { color: green; font-weight: bold; }
+  .fail { color: red; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h1>Click Tracker Game</h1>
+<label>Clicks per round (x): </label>
+<input type="number" id="xInput" value="6" min="1">
+<h2 id="score">Score: 0</h2>
+<p id="timer">Seconds since last click: 0.0s</p>
+<p id="warning"></p>
+<p>(Click anywhere to play!)</p>
+
+<div id="history"><h3>Click History</h3></div>
+
+<script>
+  const scoreEl = document.getElementById('score');
+  const timerEl = document.getElementById('timer');
+  const historyEl = document.getElementById('history');
+  const xInput = document.getElementById('xInput');
+  const warningEl = document.getElementById('warning');
+
+  let clickTimes = [];
+  let score = 0;
+  let lastClickTime = null;
+  let milestoneResults = {}; // milestone index => success/fail
+
+  // Timer
+  setInterval(() => {
+    if (lastClickTime) {
+      const diff = ((Date.now() - lastClickTime) / 1000).toFixed(1);
+      timerEl.textContent = `Seconds since last click: ${diff}s`;
+    } else {
+      timerEl.textContent = `Seconds since last click: 0.0s`;
+    }
+  }, 100);
+
+  document.body.addEventListener('click', handleClick);
+
+  function handleClick() {
+    const now = Date.now();
+    const lastClick = clickTimes[clickTimes.length - 1];
+    clickTimes.push(now);
+    lastClickTime = now;
+
+    const x = parseInt(xInput.value, 10);
+
+    // Warning before milestone
+    if ((clickTimes.length % x) === (x - 1)) {
+      warningEl.textContent = "⚠️ Next click triggers a check!";
+      warningEl.style.opacity = 1;
+    } else {
+      warningEl.style.opacity = 0;
+    }
+
+    // Check milestone
+    if (clickTimes.length % x === 0 && clickTimes.length > 1) {
+      const interval = now - lastClick;
+      const success = interval <= 1000; // within 1 second
+      milestoneResults[clickTimes.length] = { success, interval };
+
+      if (success) score++;
+      scoreEl.textContent = `Score: ${score}`;
+    }
+
+    updateHistory();
+  }
+
+  function updateHistory() {
+    historyEl.innerHTML = "<h3>Click History</h3>";
+    const x = parseInt(xInput.value, 10);
+
+    clickTimes.forEach((time, i) => {
+      const index = i + 1;
+      const interval = i === 0 ? 0 : time - clickTimes[i - 1];
+      const milestoneCheck = (index % x === 0);
+      let cls = "";
+      let marker = "";
+
+      if (milestoneCheck && milestoneResults[index]) {
+        if (milestoneResults[index].success) {
+          cls = "success";
+          marker = ` ✅ (Milestone success, Δ${milestoneResults[index].interval} ms)`;
+        } else {
+          cls = "fail";
+          marker = ` ❌ (Milestone fail, Δ${milestoneResults[index].interval} ms)`;
+        }
+      }
+
+      historyEl.innerHTML += `<p class="${cls}">Click ${index}: ${new Date(time).toLocaleTimeString()} (Δ${interval} ms)${marker}</p>`;
+    });
+  }
+</script>
+
+</body>
+</html>
